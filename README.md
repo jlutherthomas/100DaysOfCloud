@@ -5,16 +5,14 @@
 ## The Challenge
 1. Read about the challenge and register at [#100DaysOfCloud.com](https://100DaysOfCloud.com)
 
-## [✍️ Your Name]'s Cloud Journey
+## Jennifer's Cloud Journey
+My name is Jennifer and I work at Safe Software as an FME Cloud Technology Expert, supporting customers with their cloud, Kubernetes and Docker deployments.
 
-[✍️ Introduce yourself]
+I'm doing this challenge to build momentum in learning things that compliment my job and interests.
+By the end of it, I'd like to be more proficient in AWS, Azure and Kubernetes. Maybe even use this as a driver to start working towards my Microsoft Azure Administrator Associate Exam. 
 
-[✍️ Tell us why you started this challenge]
-
-[✍️ Tell us where you want to be at the end of the challenge]
-
-- [✍️ Link to your Twitter](https://twitter.com/username)
-- [✍️ Link to your LinkedIn](https://www.linkedin.com/in/username)
+- [My Twitter](https://twitter.com/mapgirll)
+- [My LinkedIn](https://www.linkedin.com/in/jennifer-luther-thomas-59b79071/)
 
 ## Stepping out the door
 
