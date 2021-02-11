@@ -42,6 +42,4 @@ There are a lot of next steps for this project, and two directions to take it in
 
 ## Social Proof
 
-✍️ Show that you shared your process on Twitter or LinkedIn
-
-[link](link)
+[Tweet](https://twitter.com/mapgirll/status/1359749585644625920?s=21)
