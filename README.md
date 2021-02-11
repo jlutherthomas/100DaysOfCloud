@@ -16,11 +16,11 @@ By the end of it, I'd like to be more proficient in AWS, Azure and Kubernetes. M
 
 ## Stepping out the door
 
-- [ ] ☁️ 1 > [My First Day](Journey/001/Readme.md)
+- [ ] ☁️ 1 > [My First Day - CloudFormation Template for AWS VPC and EFS](Journey/001/Readme.md)
 - [ ] ☁️ 2 > [](Journey/002/Readme.md)
 - [ ] ☁️ 3 > [](Journey/003/Readme.md)
-- [ ] ☁️ 4 > [](Journey/004/Readme.md)
-- [ ] ☁️ 5 > [](Journey/005/Readme.md)
+- [ ] ☁️ 4 > [Learning Azure Resource Manager Templates](Journey/004/Readme.md)
+- [ ] ☁️ 5 > [Google Cloud Functions - Storage Account Create to Webhook](Journey/005/Readme.md)
 - [ ] ☁️ 6 > [](Journey/006/Readme.md)
 - [ ] ☁️ 7 > [](Journey/007/Readme.md)
 - [ ] ☁️ 8 > [](Journey/008/Readme.md)
