@@ -1,0 +1,611 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for the resources."
+      }
+    },
+      "vmSizeCore": {
+        "type": "string",
+        "defaultValue": "Standard_D2s_v3",
+        "metadata": {
+          "description": "Size of VMs in the Core VM Scale Set."
+        }
+      },
+      "vmSizeEngine": {
+        "type": "string",
+        "defaultValue": "Standard_D2s_v3",
+        "metadata": {
+          "description": "Size of VMs in the Engine VM Scale Set."
+        }
+      },
+      "vmssNameCore": {
+        "type": "string",
+        "defaultValue": "fmeserver-core",
+        "metadata": {
+          "description": "Name of the VM Scaleset for the Core machines"
+        },
+        "maxLength": 61
+      },
+      "vmssNameEngine": {
+        "type": "string",
+        "defaultValue": "fmeserver-engine",
+        "metadata": {
+          "description": "Name of the VM Scaleset for the Engine machines"
+        },
+        "maxLength": 61
+      },
+      "instanceCountCore": {
+        "type": "int",
+        "metadata": {
+          "description": "Number of Core VM instances."
+        },
+        "defaultValue": 1
+      },
+      "instanceCountEngine": {
+        "type": "int",
+        "metadata": {
+          "description": "Number of Engine VM instances."
+        },
+        "defaultValue": 1
+      },
+      "storageNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "metadata": {
+          "description": "Determines whether or not a new storage account should be provisioned."
+        }
+      },
+      "storageAccountName": {
+        "type": "string",
+        "defaultValue": "[concat('fmeserver', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the storage account"
+        }
+      },
+      "postgresServerName": {
+        "type": "string",
+        "defaultValue": "[concat('fmeserver-postgresql-', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the Postgresql server"
+        }
+      },
+      "virtualNetworkNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "metadata": {
+          "description": "Determines whether or not a new virtual network should be provisioned."
+        }
+      },
+      "virtualNetworkName": {
+        "type": "string",
+        "defaultValue": "fmeserver-vnet",
+        "metadata": {
+          "description": "Name of the virtual network"
+        }
+      },
+      "addressPrefixes": {
+        "type": "array",
+        "defaultValue": [
+          "10.0.0.0/16"
+        ],
+        "metadata": {
+          "description": "Address prefix of the virtual network"
+        }
+      },
+      "subnetName": {
+        "type": "string",
+        "defaultValue": "default",
+        "metadata": {
+          "description": "Name of the subnet"
+        }
+      },
+      "subnetPrefix": {
+        "type": "string",
+        "defaultValue": "10.0.0.0/24",
+        "metadata": {
+          "description": "Subnet prefix of the virtual network"
+        }
+      },
+      "virtualNetworkResourceGroupName": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().name]",
+        "metadata": {
+          "description": "Name of the resource group for the existing virtual network"
+        }
+      },
+      "publicIpNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "metadata": {
+          "description": "Determines whether or not a new public ip should be provisioned."
+        }
+      },
+      "publicIpName": {
+        "type": "string",
+        "defaultValue": "fmeserver-pip",
+        "metadata": {
+          "description": "Name of the public ip address"
+        }
+      },
+      "publicIpDns": {
+        "type": "string",
+        "defaultValue": "[concat('fmeserver-', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "DNS of the public ip address for the VM"
+        }
+      },
+      "publicIpAllocationMethod": {
+        "type": "string",
+        "defaultValue": "Dynamic",
+        "allowedValues": [
+          "Dynamic",
+          "Static"
+        ],
+        "metadata": {
+          "description": "Allocation method for the public ip address"
+        }
+      },
+      "publicIpSku": {
+        "type": "string",
+        "defaultValue": "Basic",
+        "allowedValues": [
+          "Basic",
+          "Standard"
+        ],
+        "metadata": {
+          "description": "Name of the resource group for the public ip address"
+        }
+      },
+      "adminUsername": {
+        "type": "string",
+        "metadata": {
+          "description": "Admin username on all VMs."
+        }
+      },
+      "adminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "Admin password on all VMs."
+        }
+      }
+    },
+    "variables": {
+      "loadBalancerName": "fmeserver-loadBalancer",
+      "loadBalancerFrontEndName": "loadBalancerFrontEnd",
+      "loadBalancerBackEndName": "loadBalancerBackEnd",
+      "loadBalancerProbeName": "loadBalancerHttpProbe",
+      "engineRegistrationLoadBalancerName": "fmeserver-engineregistration",
+      "engineRegistrationloadBalancerFrontEndName": "engineRegistrationFrontend",
+      "engineRegistrationloadBalancerBackEndName": "engineRegistrationBackend",
+      "postgresqlAdministratorLogin": "postgres",
+      "postgresqlAdministratorLoginPassword": "[concat('P', uniqueString(resourceGroup().id, deployment().name, 'ad909260-dc63-4102-983f-4f82af7a6840'), 'x', '!')]",
+      "filesharename": "fmeserverdata"
+    },
+    "resources": [
+      { 
+        "apiVersion": "2020-06-01",
+        "name": "pid-84586025-2571-5f15-ac17-f38fb7b4d8de", 
+        "type": "Microsoft.Resources/deployments",
+        "properties": {
+            "mode": "Incremental",
+            "template": {
+                "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "resources": []
+            }
+        }
+      },
+      {
+        "type": "Microsoft.Compute/virtualMachineScaleSets",
+        "name": "[parameters('vmssNameCore')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2019-07-01",
+        "dependsOn": [
+          "[parameters('virtualNetworkName')]",
+          "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+          "[resourceId('Microsoft.DBforPostgreSQL/servers', parameters('postgresServerName'))]",
+          "[resourceId('Microsoft.DBforPostgreSQL/servers/virtualNetworkRules', parameters('postgresServerName'), 'postgres-vnet-rule')]"
+        ],
+        "sku": {
+          "name": "[parameters('vmSizeCore')]",
+          "capacity": "[parameters('instanceCountCore')]"
+        },
+        "plan": {
+          "publisher": "safesoftwareinc",
+          "name": "fme-core-2020-2-windows-byol",
+          "product": "fme-core"
+        },
+        "properties": {
+          "overprovision": false,
+          "upgradePolicy": {
+            "mode": "Manual"
+          },
+          "virtualMachineProfile": {
+            "storageProfile": {
+              "osDisk": {
+                "createOption": "FromImage",
+                "caching": "ReadWrite"
+              },
+              "imageReference": {
+                "publisher": "safesoftwareinc",
+                "offer": "fme-core",
+                "sku": "fme-core-2020-2-windows-byol",
+                "version": "1.0.0"
+              }
+            },
+            "osProfile": {
+              "computerNamePrefix": "core",
+              "adminUsername": "[parameters('adminUsername')]",
+              "adminPassword": "[parameters('adminPassword')]"
+            },
+            "networkProfile": {
+              "networkInterfaceConfigurations": [
+                {
+                  "name": "nic-core",
+                  "properties": {
+                    "primary": true,
+                    "ipConfigurations": [
+                      {
+                        "name": "ipconfig",
+                        "properties": {
+                          "subnet": {
+                            "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                          },
+                          "loadBalancerBackendAddressPools": [
+                            {
+                              "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('loadBalancerBackEndName'))]"                             
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "extensionProfile": {
+              "extensions": [
+                {
+                  "name": "customScript",
+                  "properties": {
+                    "publisher": "Microsoft.Compute",
+                    "settings": {
+                      "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File C:\\config_fmeserver_confd.ps1 -databasehostname ', reference(resourceId('Microsoft.DBforPostgreSQL/servers',parameters('postgresServerName'))).fullyQualifiedDomainName, ' -databasePassword ', variables('postgresqlAdministratorLoginPassword'), ' -databaseUsername ', variables('postgresqlAdministratorLogin'), ' -externalhostname ', reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))).dnsSettings.fqdn, ' -storageAccountName ', parameters('storageAccountName') , ' -storageAccountKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value, ' >C:\\confd-log.txt 2>&1') ]"
+                    },
+                    "typeHandlerVersion": "1.8",
+                    "autoUpgradeMinorVersion": true,
+                    "type": "CustomScriptExtension"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Compute/virtualMachineScaleSets",
+        "name": "[parameters('vmssNameEngine')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2019-07-01",
+        "dependsOn": [
+          "[parameters('virtualNetworkName')]",
+          "[resourceId('Microsoft.Network/loadBalancers', variables('engineRegistrationLoadBalancerName'))]",
+          "[resourceId('Microsoft.DBforPostgreSQL/servers', parameters('postgresServerName'))]",
+          "[resourceId('Microsoft.DBforPostgreSQL/servers/virtualNetworkRules', parameters('postgresServerName'), 'postgres-vnet-rule')]"
+        ],
+        "sku": {
+          "name": "[parameters('vmSizeEngine')]",
+          "capacity": "[parameters('instanceCountEngine')]"
+        },
+        "plan": {
+          "publisher": "safesoftwareinc",
+          "name": "fme-engine-2020-2-windows-byol",
+          "product": "fme-engine"
+        },
+        "properties": {
+          "overprovision": false,
+          "upgradePolicy": {
+            "mode": "Manual"
+          },
+          "virtualMachineProfile": {
+            "storageProfile": {
+              "osDisk": {
+                "createOption": "FromImage",
+                "caching": "ReadWrite"
+              },
+              "imageReference": {
+                "publisher": "safesoftwareinc",
+                "offer": "fme-engine",
+                "sku": "fme-engine-2020-2-windows-byol",
+                "version": "1.0.0"
+              }
+            },
+            "osProfile": {
+              "computerNamePrefix": "engine",
+              "adminUsername": "[parameters('adminUsername')]",
+              "adminPassword": "[parameters('adminPassword')]"
+            },
+            "networkProfile": {
+              "networkInterfaceConfigurations": [
+                {
+                  "name": "nic-engine",
+                  "properties": {
+                    "primary": true,
+                    "ipConfigurations": [
+                      {
+                        "name": "ipconfig",
+                        "properties": {
+                          "subnet": {
+                            "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "extensionProfile": {
+              "extensions": [
+                {
+                  "name": "customScript",
+                  "properties": {
+                    "publisher": "Microsoft.Compute",
+                    "settings": {
+                      "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File C:\\config_fmeserver_confd_engine.ps1 -databasehostname ', reference(resourceId('Microsoft.DBforPostgreSQL/servers',parameters('postgresServerName'))).fullyQualifiedDomainName, ' -engineregistrationhost ', reference(resourceId('Microsoft.Network/loadBalancers', variables('engineRegistrationLoadBalancerName'))).frontendIPConfigurations[0].properties.privateIPAddress, ' -storageAccountName ', parameters('storageAccountName') , ' -storageAccountKey ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value, ' >C:\\confd-log.txt 2>&1' )]"
+                    },
+                    "typeHandlerVersion": "1.8",
+                    "autoUpgradeMinorVersion": true,
+                    "type": "CustomScriptExtension"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[parameters('virtualNetworkName')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2019-12-01",
+        
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": "[parameters('addressPrefixes')]"
+          },
+          "subnets": [
+            {
+              "name": "[parameters('subnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetPrefix')]",
+                "serviceEndpoints": [
+                  {
+                    "service": "Microsoft.Storage"
+                  },
+                  {
+                    "service": "Microsoft.Sql"
+                  }
+                ],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "condition": "[equals(parameters('publicIpNewOrExisting'), 'new')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('publicIpName')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2019-12-01",
+         "sku": {
+          "name": "[parameters('publicIpSku')]"
+        }, 
+        "properties": {
+          "publicIPAllocationMethod": "[parameters('publicIpAllocationMethod')]",
+          "dnsSettings": {
+            "domainNameLabel": "[toLower(parameters('publicIpDns'))]"
+          },
+          "idleTimeoutInMinutes": 30
+        }
+      },
+      {
+        "type": "Microsoft.Network/loadBalancers",
+        "name": "[variables('loadBalancerName')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2020-06-01",
+        "dependsOn": [
+            "[parameters('virtualNetworkName')]"
+        ],
+        "properties": {
+          "frontendIPConfigurations": [
+            {
+              "name": "[variables('loadBalancerFrontEndName')]",
+              "properties": {
+                "subnet": {
+                  "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                },
+                "privateIPAddress": "10.0.0.6",
+                "privateIPAllocationMethod": "Static"
+              }
+            }
+          ],
+          "backendAddressPools": [
+            {
+              "name": "[variables('loadBalancerBackendName')]"
+            }
+          ],
+          "loadBalancingRules": [
+            {
+              "name": "roundRobinLBRule",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), variables('loadBalancerFrontEndName'))]"
+                },
+                "backendAddressPool": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('loadBalancerName'), variables('loadBalancerBackendName'))]"
+                },
+                "protocol": "Tcp",
+                "frontendPort": 80,
+                "backendPort": 8080,
+                "enableFloatingIP": false,
+                "idleTimeoutInMinutes": 30,
+                "probe": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('loadBalancerName'), variables('loadBalancerProbeName'))]"
+                }
+              }
+            }
+          ],
+          "probes": [
+            {
+              "name": "[variables('loadBalancerProbeName')]",
+              "properties": {
+                "protocol": "Tcp",
+                "port": 8080,
+                "intervalInSeconds": 5,
+                "numberOfProbes": 2
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Network/loadBalancers",
+        "name": "[variables('engineRegistrationLoadBalancerName')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2019-12-01",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPName'))]"
+        ],
+        "properties": {
+          "frontendIPConfigurations": [
+            {
+              "name": "[variables('engineregistrationLoadBalancerFrontEndName')]",
+              "properties": {
+                "subnet": {
+                  "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                },
+                "privateIPAllocationMethod": "Dynamic"
+              }
+            }
+          ],
+          "backendAddressPools": [
+            {
+              "name": "[variables('engineRegistrationloadBalancerBackEndName')]"
+            }
+          ],
+          "loadBalancingRules": [
+            {
+              "name": "roundRobinEngineRegistrationRule",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('engineRegistrationLoadBalancerName'), variables('engineregistrationLoadBalancerFrontEndName'))]"
+                },
+                "backendAddressPool": {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('engineRegistrationLoadBalancerName'), variables('engineRegistrationLoadBalancerBackendName'))]"
+                },
+                "protocol": "Tcp",
+                "frontendPort": 7070,
+                "backendPort": 7070,
+                "enableFloatingIP": false,
+                "idleTimeoutInMinutes": 30
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2017-12-01",
+        "type": "Microsoft.DBforPostgreSQL/servers",
+        "location": "[parameters('location')]",
+        "name": "[parameters('postgresServerName')]",
+        "sku": {
+            "name": "GP_Gen5_2",
+            "tier": "GeneralPurpose",
+            "capacity": 2,
+            "size": "51200",
+            "family": "Gen5"
+        },
+        "properties": {
+            "version": "10",
+            "createMode": "Default",
+            "administratorLogin": "[variables('postgresqlAdministratorLogin')]",
+            "administratorLoginPassword": "[variables('postgresqlAdministratorLoginPassword')]",
+            "storageMB": "51200"
+        },
+        "resources": [
+            {
+                "name": "postgres-vnet-rule",
+                "type": "virtualNetworkRules",
+                "apiVersion": "2017-12-01",
+                "properties": {
+                    "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+                    "ignoreMissingVnetServiceEndpoint": true
+                },
+                "dependsOn": [
+                    "[concat('Microsoft.DBforPostgreSQL/servers/', parameters('postgresServerName'))]"
+                ]
+            },
+            {
+                "name": "postgres",
+                "type": "databases",
+                "apiVersion": "2017-12-01",
+                "properties": {
+                    "charset": "utf8",
+                    "collation": "English_United States.1252"
+                },
+                "dependsOn": [
+                    "[concat('Microsoft.DBforPostgreSQL/servers/', parameters('postgresServerName'))]"
+                ]
+            }
+        ]
+      },
+      {
+          "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
+          "type": "Microsoft.Storage/storageAccounts",
+          "apiVersion": "2019-04-01",
+          "name": "[parameters('storageAccountName')]",
+          "location": "[parameters('location')]",
+          "kind": "FileStorage",
+          "sku": {
+              "name": "Premium_LRS"
+          },
+          "dependsOn": [
+            "[parameters('virtualNetworkName')]"
+          ],
+          "properties": {
+              "networkAcls": {
+                  "bypass": "AzureServices",
+                  "defaultAction": "Deny",
+                  "virtualNetworkRules": [
+                    {
+                      "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                    }
+                ]
+              }
+          }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+            "apiVersion": "2019-06-01",
+            "name": "[concat(parameters('storageAccountName'), '/default/', variables('filesharename'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', concat(parameters('storageAccountName')))]"
+            ]
+        }
+    ],
+  "outputs": {
+    "fqdn": {
+      "type": "string",
+        "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))).dnsSettings.fqdn]"
+    }
+  }
+}
