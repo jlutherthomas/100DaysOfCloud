@@ -1,52 +1,38 @@
-**Add a cover photo like:**
-![placeholder image](https://via.placeholder.com/1200x600)
-
-# New post title here
+# Google Cloud Functions - Storage Account Create to Webhook
 
 ## Introduction
 
-✍️ (Why) Explain in one or two sentences why you choose to do this project or cloud topic for your day's study.
+I did this becuase FME Server doesn't have a Google Storage watcher/trigger in Automations. I want to trigger a workspace to run when a new file is placed in a Google Storage Bucket.
 
 ## Prerequisite
 
-✍️ (What) Explain in one or two sentences the base knowledge a reader would need before describing the the details of the cloud service or topic.
+A Google Storage Account
+
+A Webhook Endpoint
+
+Knowledge of Python (optional - I got by copying and pasting bits off StackOverflow)
 
 ## Use Case
 
-- 🖼️ (Show-Me) Create an graphic or diagram that illustrate the use-case of how this knowledge could be applied to real-world project
-- ✍️ (Show-Me) Explain in one or two sentences the use case
+This would useful for FME Server integration. The webhook in FME Server receives JSON, that will get passed to a workspace. When the workspace receives the JSON payload it will flatten it to get the file and bucket name which will get used in the Google Storage Connector transformer to download and read some data that will get process in FME (and ultimately uploaded to GBQ)
 
-## Cloud Research
+## Cloud Research & Outcome
 
-- ✍️ Document your trial and errors. Share what you tried to learn and understand about the cloud topic or while completing micro-project.
-- 🖼️ Show as many screenshot as possible so others can experience in your cloud research.
+To start with I found the ![Google Cloud documentation for Google Cloud Storage Triggers](https://cloud.google.com/functions/docs/calling/storage#functions-calling-storage-python). I chose to use the python triggers as I assume more FME users would know python over node (which would have been my preference). Ultimately I'm building this project to demonstrate integration between GCP and FME (Server)
 
-## Try yourself
+The next step was expanding the python code to be able to send a JSON message to my webhook endpoint (FME Server). This bit I had some trouble with. I found a ![Stack Overflow thread](https://stackoverflow.com/questions/11322430/how-to-send-post-request) that I took pieces from several different answers.
 
-✍️ Add a mini tutorial to encourage the reader to get started learning something new about the cloud.
+I started with just importing requests, but found that the payload wasn't valid JSON, and FME Server was receiving/encoding it to base64. When I decoded it, it wasn't in the nice format I wanted. I then added the JSON module, and then added headers. Finally, FME Server would receive the data the way I wanted:
 
-### Step 1 — Summary of Step
-
-![Screenshot](https://via.placeholder.com/500x300)
-
-### Step 1 — Summary of Step
-
-![Screenshot](https://via.placeholder.com/500x300)
-
-### Step 3 — Summary of Step
-
-![Screenshot](https://via.placeholder.com/500x300)
-
-## ☁️ Cloud Outcome
-
-✍️ (Result) Describe your personal outcome, and lessons learned.
+![Screenshot](./screenshots/FMEServerAutomationLog.png)
 
 ## Next Steps
+Next I plan to build an FME Workspace that will take that JSON message, download/read in the data, process it, then write it to Google Big Query:
 
-✍️ Describe what you think you think you want to do next.
+![Screenshot](./screenshots/FMEWorkspace.png)
 
 ## Social Proof
 
-✍️ Show that you shared your process on Twitter or LinkedIn
+Show that you shared your process on Twitter or LinkedIn
 
 [link](link)
