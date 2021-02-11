@@ -33,6 +33,4 @@ Next I plan to build an FME Workspace that will take that JSON message, download
 
 ## Social Proof
 
-Show that you shared your process on Twitter or LinkedIn
-
-[link](link)
+[Tweet](https://twitter.com/mapgirll/status/1359749585644625920?s=21)
